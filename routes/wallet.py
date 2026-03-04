@@ -19,12 +19,15 @@ async def add_funds(
 ):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be positive")
-    
+
     await db.users.update_one(
         {"_id": user["_id"]},
-        {"$inc": {"balance": amount}, "$set": {"updated_at": datetime.now(timezone.utc)}}
+        {
+            "$inc": {"balance": amount},
+            "$set": {"updated_at": datetime.now(timezone.utc)}
+        }
     )
-    
+
     transaction = TransactionModel(
         user_id=user["telegram_id"],
         amount=amount,
@@ -32,6 +35,6 @@ async def add_funds(
         description=description
     )
     await db.transactions.insert_one(transaction.model_dump(by_alias=True))
-    
+
     updated_user = await db.users.find_one({"_id": user["_id"]})
     return {"new_balance": updated_user["balance"]}
